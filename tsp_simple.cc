@@ -386,7 +386,7 @@ void TSPTWSolver(const TSPTWDataDT &data) {
   if (force_start) {
     if (FLAGS_debug) std::cout << "Path Cheapest Arc" << std::endl;
     parameters.set_first_solution_strategy(FirstSolutionStrategy::PATH_CHEAPEST_ARC);
-  } else if (has_route_duration) {
+  } else if (has_route_duration && size_vehicles == 1) {
     if (FLAGS_debug) std::cout << "Global Cheapest Arc" << std::endl;
     parameters.set_first_solution_strategy(FirstSolutionStrategy::GLOBAL_CHEAPEST_ARC);
   } else if (data.DeliveriesCounter() > 0 || (float)size_mtws/size > 0.2) {
