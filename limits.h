@@ -7,16 +7,17 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <vector>
 
-#include "base/bitmap.h"
-#include "base/logging.h"
-#include "base/file.h"
-#include "base/split.h"
-#include "base/filelinereader.h"
-#include "base/join.h"
-#include "base/strtoint.h"
+#include "ortools/base/bitmap.h"
+#include "ortools/base/logging.h"
+#include "ortools/base/file.h"
+#include "ortools/base/split.h"
+#include "ortools/base/filelinereader.h"
+#include "ortools/base/join.h"
+#include "ortools/base/strtoint.h"
 
-#include "constraint_solver/constraint_solver.h"
+#include "ortools/constraint_solver/constraint_solver.h"
 
 namespace operations_research {
 namespace {
@@ -151,7 +152,7 @@ namespace {
 //  Don't use this class within a MakeLimit factory method!
 class LoggerMonitor : public SearchLimit {
   public:
-    LoggerMonitor(const TSPTWDataDT &data, RoutingModel * routing, int64 min_start, int64 size_matrix, vector<IntVar*> breaks, bool debug, const bool minimize = true) :
+    LoggerMonitor(const TSPTWDataDT &data, RoutingModel * routing, int64 min_start, int64 size_matrix, std::vector<IntVar*> breaks, bool debug, const bool minimize = true) :
     data_(data),
     routing_(routing),
     SearchLimit(routing->solver()),
@@ -307,7 +308,7 @@ class LoggerMonitor : public SearchLimit {
     double start_time_;
     int64 min_start_;
     int64 size_matrix_;
-    vector<IntVar*> breaks_;
+    std::vector<IntVar*> breaks_;
     bool minimize_;
     bool limit_reached_;
     bool debug_;
@@ -318,7 +319,7 @@ class LoggerMonitor : public SearchLimit {
 
 } // namespace
 
-LoggerMonitor * MakeLoggerMonitor(const TSPTWDataDT &data, RoutingModel * routing, int64 min_start, int64 size_matrix, vector<IntVar*> breaks, bool debug, const bool minimize = true) {
+LoggerMonitor * MakeLoggerMonitor(const TSPTWDataDT &data, RoutingModel * routing, int64 min_start, int64 size_matrix, std::vector<IntVar*> breaks, bool debug, const bool minimize = true) {
   return routing->solver()->RevAlloc(new LoggerMonitor(data, routing, min_start, size_matrix, breaks, debug, minimize));
 }
 }  //  namespace operations_research
