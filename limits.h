@@ -13,7 +13,7 @@
 #include "ortools/base/logging.h"
 #include "ortools/base/file.h"
 #include "ortools/base/split.h"
-#include "ortools/base/filelinereader.h"
+#include "ortools/base/filelineiter.h"
 #include "ortools/base/join.h"
 #include "ortools/base/strtoint.h"
 
@@ -31,7 +31,7 @@ class NoImprovementLimit : public SearchLimit {
     SearchLimit(solver),
       solver_(solver), prototype_(new Assignment(solver_)),
       solution_nbr_tolerance_(solution_nbr_tolerance),
-      start_time_(base::GetCurrentTimeNanos()),
+      start_time_(absl::GetCurrentTimeNanos()),
       nbr_solutions_with_no_better_obj_(0),
       minimize_(minimize),
       initial_time_out_(time_out),
@@ -61,7 +61,7 @@ class NoImprovementLimit : public SearchLimit {
 
   //  Returns true if limit is reached, false otherwise.
   virtual bool Check() {
-    if (!first_solution_ && (nbr_solutions_with_no_better_obj_ > solution_nbr_tolerance_ && solution_nbr_tolerance_ > 0 || 1e-6 * (base::GetCurrentTimeNanos() - start_time_) > time_out_ && initial_time_out_ > 0)) {
+    if (!first_solution_ && (nbr_solutions_with_no_better_obj_ > solution_nbr_tolerance_ && solution_nbr_tolerance_ > 0 || 1e-6 * (absl::GetCurrentTimeNanos() - start_time_) > time_out_ && initial_time_out_ > 0)) {
       limit_reached_ = true;
     }
     //VLOG(2) << "NoImprovementLimit's limit reached? " << limit_reached_;
@@ -80,14 +80,14 @@ class NoImprovementLimit : public SearchLimit {
       }
       best_result_ = objective->Min();
       nbr_solutions_with_no_better_obj_ = 0;
-      if (initial_time_out_ > 0) time_out_ = std::max(initial_time_out_ - 1e-6 * (base::GetCurrentTimeNanos() - start_time_), time_out_coef_ * 1e-6 * (base::GetCurrentTimeNanos() - start_time_));
+      if (initial_time_out_ > 0) time_out_ = std::max(initial_time_out_ - 1e-6 * (absl::GetCurrentTimeNanos() - start_time_), time_out_coef_ * 1e-6 * (absl::GetCurrentTimeNanos() - start_time_));
     } else if (!minimize_ && objective->Max() * 0.99 > best_result_) {
       if (first_solution_) {
         first_solution_ = false;
       }
       best_result_ = objective->Max();
       nbr_solutions_with_no_better_obj_ = 0;
-      if (initial_time_out_ > 0) time_out_ = std::max(initial_time_out_ - 1e-6 * (base::GetCurrentTimeNanos() - start_time_), time_out_coef_ * 1e-6 * (base::GetCurrentTimeNanos() - start_time_));
+      if (initial_time_out_ > 0) time_out_ = std::max(initial_time_out_ - 1e-6 * (absl::GetCurrentTimeNanos() - start_time_), time_out_coef_ * 1e-6 * (absl::GetCurrentTimeNanos() - start_time_));
     }
 
     ++nbr_solutions_with_no_better_obj_;
@@ -154,7 +154,7 @@ class LoggerMonitor : public SearchLimit {
     SearchLimit(routing->solver()),
     solver_(routing->solver()), prototype_(new Assignment(solver_)),
     iteration_counter_(0),
-    start_time_(base::GetCurrentTimeNanos()),
+    start_time_(absl::GetCurrentTimeNanos()),
     pow_(0),
     min_start_(min_start),
     size_matrix_(size_matrix),
@@ -243,7 +243,7 @@ class LoggerMonitor : public SearchLimit {
           return false;
         }
         output.close();
-        std::cout << "Iteration : " << iteration_counter_ << " Cost : " << (int64)(best_result_ / 1000.0) << " Time : " << 1e-9 * (base::GetCurrentTimeNanos() - start_time_) << std::endl;
+        std::cout << "Iteration : " << iteration_counter_ << " Cost : " << (int64)(best_result_ / 1000.0) << " Time : " << 1e-9 * (absl::GetCurrentTimeNanos() - start_time_) << std::endl;
       }
       new_best = true;
     } else if (!minimize_ && objective->Max() * 0.99 > best_result_) {
@@ -289,7 +289,7 @@ class LoggerMonitor : public SearchLimit {
           return false;
         }
         output.close();
-        std::cout << "Iteration : " << iteration_counter_ << " Cost : " << (int64)(best_result_ / 1000.0) << " Time : " << 1e-9 * (base::GetCurrentTimeNanos() - start_time_) << std::endl;
+        std::cout << "Iteration : " << iteration_counter_ << " Cost : " << (int64)(best_result_ / 1000.0) << " Time : " << 1e-9 * (absl::GetCurrentTimeNanos() - start_time_) << std::endl;
       }
       new_best = true;
     }
@@ -342,11 +342,11 @@ class LoggerMonitor : public SearchLimit {
   }
 
   std::vector<double> GetFinalScore() {
-    return {(best_result_ / 1000.0), 1e-9 * (base::GetCurrentTimeNanos() - start_time_), (double)iteration_counter_};
+    return {(best_result_ / 1000.0), 1e-9 * (absl::GetCurrentTimeNanos() - start_time_), (double)iteration_counter_};
   }
 
   void GetFinalLog() {
-    std::cout << "Final Iteration : " << iteration_counter_ << " Cost : " << (int64)(best_result_ / 1000.0) << " Time : " << 1e-9 * (base::GetCurrentTimeNanos() - start_time_) << std::endl;
+    std::cout << "Final Iteration : " << iteration_counter_ << " Cost : " << (int64)(best_result_ / 1000.0) << " Time : " << 1e-9 * (absl::GetCurrentTimeNanos() - start_time_) << std::endl;
   }
 
   private:
