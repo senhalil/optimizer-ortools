@@ -410,7 +410,8 @@ void RelationBuilder(const TSPTWDataDT &data, RoutingModel &routing, Solver *sol
               int64 end_index = routing.End(current_index);
               IntVar *const cumul_var = routing.CumulVar(start_index, "time");
               IntVar *const end_cumul_var = routing.CumulVar(end_index, "time");
-              IntVar *const vehicle_time = solver -> MakeDifference(end_cumul_var, cumul_var)->Var();
+              IntVar *const vehicle_time = solver->MakeDifference(end_cumul_var, cumul_var)->Var();
+              routing.AddVariableMinimizedByFinalizer(vehicle_time);
               same_vehicle_vars.push_back(vehicle_time);
             }
             solver->AddConstraint(solver->MakeLessOrEqual(solver->MakeSum(same_vehicle_vars), relation->lapse));
