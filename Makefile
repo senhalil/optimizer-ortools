@@ -24,7 +24,7 @@ tsp_simple.o: tsp_simple.cc $(OR_TOOLS_SOURCES)/constraint_solver/routing.h orto
 	ortools_result.pb.h \
 	$(TUTORIAL)/routing_common/routing_common.h \
 	tsptw_data_dt.h \
-	limits.h
+	limits.h filters.h
 	$(CCC) $(CFLAGS) -I $(TUTORIAL) -c tsp_simple.cc -o tsp_simple.o
 
 tsp_simple: $(ROUTING_DEPS) tsp_simple.o ortools_vrp.pb.o ortools_result.pb.o $(OR_TOOLS_TOP)/lib/libortools.so
