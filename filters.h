@@ -15,6 +15,7 @@
 // along with Mapotempo. If not, see:
 // <http://www.gnu.org/licenses/agpl.html>
 //
+
 namespace operations_research {
 
 struct Link {
@@ -34,6 +35,102 @@ bool EvalDistance(const Link& i, const Link& j) {
                            j.data->Vehicles().at(0)->Time(j.source, j.destination) +
                            j.data->Vehicles().at(0)->Value(j.source, j.destination);
   return i_distance < j_distance;
+}
+
+void SolutionVectorFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver, Assignment *assignment) {
+  if (data.Routes().size() > 0) {
+    const int size_missions = data.SizeMissions();
+    const int size_rests =  data.SizeRest();
+    const int size_vehicles = data.Vehicles().size();
+
+    std::vector<IntVar*> vehicle_vars;
+    std::vector<IntVar*> next_vars;
+    std::vector<IntVar*> next_equalities(size_missions, solver->MakeIntVar(1, 1));
+    for (int index = 0; index < size_missions; ++index) {
+      vehicle_vars.push_back(routing.VehicleVar(index));
+      next_vars.push_back(routing.NextVar(index));
+    }
+
+    for (TSPTWDataDT::Route* route: data.Routes()) {
+      int64 current_index;
+      int64 previous_index;
+      IntVar* previous_var = NULL;
+
+      if (route->vehicle_index >= 0) {
+        previous_var = routing.NextVar(routing.Start(route->vehicle_index));
+        previous_index = -1;
+      }
+      for (std::string service_id: route->service_ids) {
+        current_index = data.IdIndex(service_id);
+        if (current_index != -1) {
+          if (previous_index != -1) {
+            next_equalities.at(previous_index) = solver->MakeProd(solver->MakeProd(routing.ActiveVar(previous_index), routing.ActiveVar(current_index)), solver->MakeIsDifferentCstVar(next_vars.at(previous_index), current_index))->Var();
+            // next_equalities.at(previous_index) = solver->MakeMax(solver->MakeIsEqualCstVar(next_vars.at(previous_index), current_index),
+            //                                                     solver->MakeIsEqualCstVar(next_vars.at(previous_index), previous_index))->Var();
+          }
+          // previous_var = next_var;
+          previous_index = current_index;
+        }
+      }
+      if (route->vehicle_index >= 0) {
+        if (previous_var != NULL) {
+          next_equalities.at(previous_index) = solver->MakeProd(routing.ActiveVar(previous_index), solver->MakeIsDifferentCstVar(next_vars.at(previous_index), routing.End(route->vehicle_index)))->Var();
+          // next_equalities.at(previous_index) = solver->MakeMax(solver->MakeIsEqualCstVar(next_vars.at(previous_index), routing.End(route->vehicle_index)),
+          //                                                       solver->MakeIsEqualCstVar(next_vars.at(previous_index), previous_index))->Var();
+        }
+      }
+    }
+
+    std::vector<int64> min_cards(2, 0);
+    min_cards.at(0) = size_missions - 6;
+    std::vector<int64> max_cards(2, 6);
+    max_cards.at(0) = size_missions;
+
+    solver->AddConstraint(solver->MakeDistribute(next_equalities, min_cards, max_cards));
+  }
+}
+
+void CardinalityFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver, Assignment *assignment) {
+  int64 capacity_size = data.Vehicles().at(0)->capacity.size();
+  const int size_problem = data.SizeProblem();
+  const int size_vehicles =  data.Vehicles().size();
+
+  std::vector<int> maximum_vehicle_cardinalities(size_vehicles, CUSTOM_MAX_INT);
+  std::vector<int> minimum_vehicle_cardinalities(size_vehicles, 0);
+  std::vector<IntVar*> vehicle_vars;
+
+  if (capacity_size > 0) {
+    std::vector<std::vector<int64>> quantity_vectors;
+    for (int q = 0; q < capacity_size; ++q) {
+      std::vector<int64> quantities;
+      RoutingModel::NodeIndex i(0);
+      for (int activity = 0; activity <= size_problem; ++activity) {
+        int32 alternative_size = data.AlternativeSize(activity);
+        for (int alternative = 0; alternative < alternative_size; ++alternative) {
+          quantities.push_back(data.Quantities(i).at(q));
+          vehicle_vars.push_back(routing.VehicleVar(routing.NodeToIndex(i)));
+          ++i;
+        }
+      }
+      std::sort(quantities.begin(), quantities.end());
+      quantity_vectors.push_back(quantities);
+    }
+    for (int v_index = 0; v_index < size_vehicles; ++v_index) {
+      for (int q = 0; q < capacity_size; ++q) {
+        int64 current_capacity = data.Vehicles().at(v_index)->capacity[q];
+        if (current_capacity > 0) {
+          int64 cumulated_quantity = 0;
+          int index = 0;
+          do {
+            cumulated_quantity += quantity_vectors[q][index];
+            ++index;
+          } while (cumulated_quantity <= current_capacity && index <= size_problem);
+          maximum_vehicle_cardinalities[v_index] = std::min(maximum_vehicle_cardinalities[v_index], index);
+        }
+      }
+    }
+    solver->AddConstraint(solver->MakeDistribute(vehicle_vars, minimum_vehicle_cardinalities, maximum_vehicle_cardinalities));
+  }
 }
 
 void CapacityFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver, Assignment *assignment) {
@@ -207,6 +304,8 @@ void NeighbourFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *sol
 void DomainFilters(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver, Assignment *assignment, int64 neighbourhood) {
   CapacityFilter(data, routing, solver, assignment);
   NeighbourFilter(data, routing, solver, assignment, neighbourhood);
+  CardinalityFilter(data, routing, solver, assignment);
+  SolutionVectorFilter(data, routing, solver, assignment);
 }
 
 }
