@@ -68,6 +68,7 @@ message Vehicle {
   int64 additional_setup = 26;
   bool free_approach = 27;
   bool free_return = 28;
+  int64 type_index = 29;
 }
 
 message Relation {

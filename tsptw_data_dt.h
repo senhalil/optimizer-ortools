@@ -440,6 +440,7 @@ public:
     int64 max_ride_distance_;
     bool free_approach;
     bool free_return;
+    int64 type_index;
   };
 
   std::vector<Vehicle*> Vehicles() const {
@@ -788,6 +789,7 @@ void TSPTWDataDT::LoadInstance(const std::string & filename) {
     v->distance = vehicle.distance();
     v->free_approach = vehicle.free_approach();
     v->free_return = vehicle.free_return();
+    v->type_index = vehicle.type_index();
     if (vehicle.shift_preference().compare("force_start") == 0)
       v->shift_preference = ForceStart;
     else if (vehicle.shift_preference().compare("force_end") == 0)
