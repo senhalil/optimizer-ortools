@@ -36,7 +36,7 @@ DEFINE_int64(initial_time_out_no_solution_improvement, -1, "Initial time whitout
 DEFINE_int64(time_out_multiplier, 2, "Multiplier for the nexts time out");
 DEFINE_int64(vehicle_limit, 0, "Define the maximum number of vehicle");
 DEFINE_int64(solver_parameter, -1, "Force a particular behavior");
-DEFINE_int64(neighbourhood, -1, "Size of the neighbourhood");
+DEFINE_int64(neighbourhood, 30, "Size of the neighbourhood");
 DEFINE_int64(deviation, -1, "Maximum deviation from the provided solution");
 DEFINE_bool(balance, false, "Route balancing");
 DEFINE_bool(nearby, false, "Short segment priority");

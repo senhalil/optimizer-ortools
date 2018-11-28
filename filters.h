@@ -336,11 +336,11 @@ void BreakVehicleTypeSymmetry(const TSPTWDataDT &data, RoutingModel &routing, So
 }
 
 void DomainFilters(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver, Assignment *assignment, int64 neighbourhood, int64 deviation) {
-  CapacityFilter(data, routing, solver, assignment);
+  // CapacityFilter(data, routing, solver, assignment);
   NeighbourFilter(data, routing, solver, assignment, neighbourhood);
-  CardinalityFilter(data, routing, solver, assignment);
-  SolutionVectorFilter(data, routing, solver, assignment, deviation);
-  BreakVehicleTypeSymmetry(data, routing, solver);
+  // CardinalityFilter(data, routing, solver, assignment);
+  // SolutionVectorFilter(data, routing, solver, assignment, deviation);
+  // BreakVehicleTypeSymmetry(data, routing, solver);
 }
 
 }
