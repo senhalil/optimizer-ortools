@@ -37,8 +37,8 @@ bool EvalDistance(const Link& i, const Link& j) {
   return i_distance < j_distance;
 }
 
-void SolutionVectorFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver, Assignment *assignment) {
-  if (data.Routes().size() > 0) {
+void SolutionVectorFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver, Assignment *assignment, int64 deviation) {
+  if (data.Routes().size() > 0 && deviation >= 0) {
     const int size_missions = data.SizeMissions();
     const int size_rests =  data.SizeRest();
     const int size_vehicles = data.Vehicles().size();
@@ -95,9 +95,15 @@ void CardinalityFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *s
   const int size_problem = data.SizeProblem();
   const int size_vehicles =  data.Vehicles().size();
 
-  std::vector<int> maximum_vehicle_cardinalities(size_vehicles, CUSTOM_MAX_INT);
-  std::vector<int> minimum_vehicle_cardinalities(size_vehicles, 0);
   std::vector<IntVar*> vehicle_vars;
+  RoutingModel::NodeIndex i(0);
+  for (int activity = 0; activity <= size_problem; ++activity) {
+    int32 alternative_size = data.AlternativeSize(activity);
+    for (int alternative = 0; alternative < alternative_size; ++alternative) {
+      vehicle_vars.push_back(routing.VehicleVar(routing.NodeToIndex(i)));
+      ++i;
+    }
+  }
 
   if (capacity_size > 0) {
     std::vector<std::vector<int64>> quantity_vectors;
@@ -108,7 +114,6 @@ void CardinalityFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *s
         int32 alternative_size = data.AlternativeSize(activity);
         for (int alternative = 0; alternative < alternative_size; ++alternative) {
           quantities.push_back(data.Quantities(i).at(q));
-          vehicle_vars.push_back(routing.VehicleVar(routing.NodeToIndex(i)));
           ++i;
         }
       }
@@ -116,20 +121,26 @@ void CardinalityFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *s
       quantity_vectors.push_back(quantities);
     }
     for (int v_index = 0; v_index < size_vehicles; ++v_index) {
+      int64 maximum_cardinality = CUSTOM_MAX_INT;
       for (int q = 0; q < capacity_size; ++q) {
         int64 current_capacity = data.Vehicles().at(v_index)->capacity[q];
-        if (current_capacity > 0) {
+        if (current_capacity >= 0) {
           int64 cumulated_quantity = 0;
-          int index = 0;
-          do {
-            cumulated_quantity += quantity_vectors[q][index];
-            ++index;
-          } while (cumulated_quantity <= current_capacity && index <= size_problem);
-          maximum_vehicle_cardinalities[v_index] = std::min(maximum_vehicle_cardinalities[v_index], index);
+          int64 index = 0;
+          for (int activity = 0; activity <= size_problem; ++activity) {
+            int32 alternative_size = data.AlternativeSize(activity);
+            for (int alternative = 0; alternative < alternative_size; ++alternative) {
+              cumulated_quantity += quantity_vectors[q][index];
+              if (cumulated_quantity > current_capacity) break;
+              ++index;
+            }
+            if (cumulated_quantity > current_capacity) break;
+          }
+          maximum_cardinality = std::min(maximum_cardinality, index);
         }
       }
+      solver->AddConstraint(solver->MakeAtMost(vehicle_vars, v_index, maximum_cardinality));
     }
-    solver->AddConstraint(solver->MakeDistribute(vehicle_vars, minimum_vehicle_cardinalities, maximum_vehicle_cardinalities));
   }
 }
 
@@ -331,11 +342,11 @@ void BreakVehicleTypeSymmetry(const TSPTWDataDT &data, RoutingModel &routing, So
   }
 }
 
-void DomainFilters(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver, Assignment *assignment, int64 neighbourhood) {
+void DomainFilters(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver, Assignment *assignment, int64 neighbourhood, int64 deviation) {
   CapacityFilter(data, routing, solver, assignment);
   NeighbourFilter(data, routing, solver, assignment, neighbourhood);
   CardinalityFilter(data, routing, solver, assignment);
-  SolutionVectorFilter(data, routing, solver, assignment);
+  SolutionVectorFilter(data, routing, solver, assignment, deviation);
   BreakVehicleTypeSymmetry(data, routing, solver);
 }
 
