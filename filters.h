@@ -315,24 +315,17 @@ void NeighbourFilter(const TSPTWDataDT &data, RoutingModel &routing, Solver *sol
 void BreakVehicleTypeSymmetry(const TSPTWDataDT &data, RoutingModel &routing, Solver *solver) {
   int64 max_type = 0;
   for (TSPTWDataDT::Vehicle* vehicle : data.Vehicles()) max_type = std::max(vehicle->type_index, max_type);
-  std::vector<std::vector<int64>> vehicle_types(max_type+1);
+  std::vector<std::vector<int64>> vehicle_types(max_type + 1);
   for (int v_index = 0; v_index < data.Vehicles().size(); ++v_index) {
     vehicle_types.at(data.Vehicles().at(v_index)->type_index).push_back(v_index);
   }
-
   for (int64 v_type = 0; v_type < max_type; ++v_type) {
     int64 previous = -1;
-    for(int64 v_index : vehicle_types.at(v_type)) {
+    for (int64 v_index : vehicle_types.at(v_type)) {
       if (previous > -1) {
         solver->AddConstraint(
           solver->MakeLessOrEqual(
-            solver->MakeProd(
-              solver->MakeIsLessOrEqualCstVar(
-                routing.NextVar(routing.Start(previous)),
-                data.SizeMissions()
-              ),
-              routing.NextVar(routing.Start(previous))
-            ),
+            routing.NextVar(routing.Start(previous)),
             routing.NextVar(routing.Start(v_index))
           )
         );
