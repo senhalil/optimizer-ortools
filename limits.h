@@ -19,32 +19,32 @@
 
 #include "ortools/constraint_solver/constraint_solver.h"
 
-DEFINE_int64(time_limit_in_ms, 0, "Time limit in ms, no option means no limit.");
-DEFINE_int64(no_solution_improvement_limit, -1, "Iterations whitout improvement");
-DEFINE_int64(minimum_duration, -1, "Initial time whitout improvement in ms");
-DEFINE_int64(init_duration, -1, "Maximum duration to find a first solution");
-DEFINE_int64(time_out_multiplier, 2, "Multiplier for the nexts time out");
-DEFINE_int64(vehicle_limit, 0, "Define the maximum number of vehicle");
-DEFINE_int64(solver_parameter, -1, "Force a particular behavior");
-DEFINE_bool(only_first_solution, false, "Compute only the first solution");
-DEFINE_bool(verification_only, false, "Only verify the suplied initial solution");
-DEFINE_bool(balance, false, "Route balancing");
-DEFINE_bool(nearby, false, "Short segment priority");
+ABSL_FLAG(int64, time_limit_in_ms, 0, "Time limit in ms, no option means no limit.");
+ABSL_FLAG(int64, no_solution_improvement_limit, -1, "Iterations whitout improvement");
+ABSL_FLAG(int64, minimum_duration, -1, "Initial time whitout improvement in ms");
+ABSL_FLAG(int64, init_duration, -1, "Maximum duration to find a first solution");
+ABSL_FLAG(int64, time_out_multiplier, 2, "Multiplier for the nexts time out");
+ABSL_FLAG(int64, vehicle_limit, 0, "Define the maximum number of vehicle");
+ABSL_FLAG(int64, solver_parameter, -1, "Force a particular behavior");
+ABSL_FLAG(bool, only_first_solution, false, "Compute only the first solution");
+ABSL_FLAG(bool, verification_only, false, "Only verify the suplied initial solution");
+ABSL_FLAG(bool, balance, false, "Route balancing");
+ABSL_FLAG(bool, nearby, false, "Short segment priority");
 #ifdef DEBUG
-DEFINE_bool(debug, true, "debug display");
+ABSL_FLAG(bool, debug, true, "debug display");
 #else
-DEFINE_bool(debug, false, "debug display");
+ABSL_FLAG(bool, debug, false, "debug display");
 #endif
-DEFINE_bool(intermediate_solutions, false, "display intermediate solutions");
-DEFINE_string(routing_search_parameters,
-              "", /* An example of how we can override the default settings */
-              // "first_solution_strategy:ALL_UNPERFORMED"
-              // "local_search_operators {"
-              // "  use_path_lns:BOOL_TRUE"
-              // "  use_inactive_lns:BOOL_TRUE"
-              // "}",
-              "Text proto RoutingSearchParameters (possibly partial) that will "
-              "override the DefaultRoutingSearchParameters()");
+ABSL_FLAG(bool, intermediate_solutions, false, "display intermediate solutions");
+ABSL_FLAG(std::string, routing_search_parameters,
+          "", /* An example of how we can override the default settings */
+          // "first_solution_strategy:ALL_UNPERFORMED"
+          // "local_search_operators {"
+          // "  use_path_lns:BOOL_TRUE"
+          // "  use_inactive_lns:BOOL_TRUE"
+          // "}",
+          "Text proto RoutingSearchParameters (possibly partial) that will "
+          "override the DefaultRoutingSearchParameters()");
 
 const char* kDistance        = "distance";
 const char* kDistanceBalance = "distance_balance";

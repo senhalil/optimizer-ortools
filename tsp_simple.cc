@@ -1805,7 +1805,7 @@ int main(int argc, char** argv) {
             << operations_research::OrToolsMinorVersion() << std::endl;
 
   GOOGLE_PROTOBUF_VERIFY_VERSION;
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  absl::ParseCommandLine(argc, argv);
 
   if (absl::GetFlag(FLAGS_time_limit_in_ms) <= 0 &&
       absl::GetFlag(FLAGS_no_solution_improvement_limit) <= 0 &&
