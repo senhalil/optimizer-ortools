@@ -41,13 +41,13 @@
 
 namespace operations_research {
 
-bool CheckOverflow(const int64 a, const int64 b) {
+bool CheckOverflow(const int64_t a, const int64_t b) {
   if (a > std::pow(2, 52) / b)
     return true;
   return false;
 }
 
-int64 RoundUp(int64 numToRound, int64 multiple) {
+int64_t RoundUp(int64_t numToRound, int64_t multiple) {
   assert(multiple);
   int isPositive = (int)(numToRound >= 0);
   return ((numToRound + isPositive * (multiple - 1)) / multiple) * multiple;
@@ -73,11 +73,11 @@ double GetUpperBoundCostForDimension(const RoutingModel& routing,
                                      const std::string& dimension_name) {
   if (routing.GetMutableDimension(dimension_name) == nullptr)
     return 0;
-  const int64 start_time =
+  const int64_t start_time =
       solution->Min(routing.GetMutableDimension(dimension_name)->CumulVar(index));
-  const int64 upper_bound =
+  const int64_t upper_bound =
       routing.GetMutableDimension(dimension_name)->GetCumulVarSoftUpperBound(index);
-  const int64 excess = std::max(start_time - upper_bound, (int64)0);
+  const int64_t excess = std::max(start_time - upper_bound, (int64_t)0);
   return excess *
          routing.GetMutableDimension(dimension_name)
              ->GetCumulVarSoftUpperBoundCoefficient(index) /
@@ -86,45 +86,46 @@ double GetUpperBoundCostForDimension(const RoutingModel& routing,
 
 void MissionsBuilder(const TSPTWDataDT& data, RoutingModel& routing,
                      RoutingValues& routing_values, RoutingIndexManager& manager,
-                     Assignment* assignment, const int64 size, const int64 min_start) {
+                     Assignment* assignment, const int64_t size,
+                     const int64_t min_start) {
   const int size_vehicles = data.Vehicles().size();
   // const int size_matrix = data.SizeMatrix();
   const int size_problem = data.SizeProblem();
 
-  const int64 max_time =
+  const int64_t max_time =
       (2 * data.MaxTime() + data.MaxServiceTime()) * data.MaxTimeCost();
-  const int64 max_distance = 2 * data.MaxDistance() * data.MaxDistanceCost();
-  const int64 max_value    = 2 * data.MaxValue() * data.MaxValueCost();
+  const int64_t max_distance = 2 * data.MaxDistance() * data.MaxDistanceCost();
+  const int64_t max_value    = 2 * data.MaxValue() * data.MaxValueCost();
 
   bool overflow_danger =
       CheckOverflow(max_time + max_distance + max_value, size_vehicles);
-  int64 data_verif = (max_time + max_distance + max_value) * size_vehicles;
+  int64_t data_verif = (max_time + max_distance + max_value) * size_vehicles;
 
   overflow_danger = overflow_danger || CheckOverflow(data_verif, std::pow(2, 4) * size);
   data_verif      = data_verif * std::pow(2, 4) * size;
   RoutingIndexManager::NodeIndex i(0);
-  int32 tw_index = 0;
-  int64 disjunction_cost =
+  int32_t tw_index = 0;
+  int64_t disjunction_cost =
       !overflow_danger && !CheckOverflow(data_verif, size) ? data_verif : std::pow(2, 52);
 
   for (int activity = 0; activity <= size_problem; ++activity) {
-    std::vector<int64>* vect = new std::vector<int64>();
+    std::vector<int64_t>* vect = new std::vector<int64_t>();
 
-    const int64 priority       = data.Priority(i);
-    const int64 exclusion_cost = data.ExclusionCost(i);
+    const int64_t priority       = data.Priority(i);
+    const int64_t exclusion_cost = data.ExclusionCost(i);
 
     for (int alternative = 0; alternative < data.AlternativeSize(activity);
          ++alternative) {
       vect->push_back(manager.NodeToIndex(i));
-      const int64 index               = manager.NodeToIndex(i);
-      const std::vector<int64>& ready = data.ReadyTime(i);
-      const std::vector<int64>& due   = data.DueTime(i);
-      const int64 initial_value       = routing_values.NodeValues(i).initial_time_value;
+      const int64_t index               = manager.NodeToIndex(i);
+      const std::vector<int64_t>& ready = data.ReadyTime(i);
+      const std::vector<int64_t>& due   = data.DueTime(i);
+      const int64_t initial_value       = routing_values.NodeValues(i).initial_time_value;
 
-      IntVar* cumul_var           = routing.GetMutableDimension(kTime)->CumulVar(index);
-      const int64 late_multiplier = data.LateMultiplier(i);
-      std::vector<int64> sticky_vehicle = data.VehicleIndices(i);
-      std::string service_id            = data.ServiceId(i);
+      IntVar* cumul_var             = routing.GetMutableDimension(kTime)->CumulVar(index);
+      const int64_t late_multiplier = data.LateMultiplier(i);
+      std::vector<int64_t> sticky_vehicle = data.VehicleIndices(i);
+      std::string service_id              = data.ServiceId(i);
       if (ready.size() > 0 &&
           (ready[0] > -CUSTOM_MAX_INT || due.back() < CUSTOM_MAX_INT)) {
         if (absl::GetFlag(FLAGS_debug)) {
@@ -157,9 +158,9 @@ void MissionsBuilder(const TSPTWDataDT& data, RoutingModel& routing,
       }
 
       if (sticky_vehicle.size() > 0) {
-        std::vector<int64> vehicle_indices;
-        std::vector<int64> vehicle_intersection;
-        std::vector<int64> vehicle_difference;
+        std::vector<int64_t> vehicle_indices;
+        std::vector<int64_t> vehicle_intersection;
+        std::vector<int64_t> vehicle_difference;
 
         for (int v = 0; v < size_vehicles; ++v)
           vehicle_indices.push_back(v);
@@ -171,7 +172,7 @@ void MissionsBuilder(const TSPTWDataDT& data, RoutingModel& routing,
                             vehicle_intersection.begin(), vehicle_intersection.end(),
                             std::back_inserter(vehicle_difference));
         if (vehicle_difference.size() > 0) {
-          for (int64 remove : vehicle_difference)
+          for (int64_t remove : vehicle_difference)
             routing.VehicleVar(index)->RemoveValue(remove);
         }
       }
@@ -208,11 +209,11 @@ void MissionsBuilder(const TSPTWDataDT& data, RoutingModel& routing,
 bool RouteBuilder(const TSPTWDataDT& data, RoutingModel& routing,
                   RoutingIndexManager& manager, Assignment* assignment) {
   const int size_vehicles = data.Vehicles().size();
-  std::vector<std::vector<int64>> routes(size_vehicles);
+  std::vector<std::vector<int64_t>> routes(size_vehicles);
   for (const TSPTWDataDT::Route& route : data.Routes()) {
-    int64 current_index;
+    int64_t current_index;
     IntVar* previous_var = NULL;
-    std::vector<int64> route_variable_indicies;
+    std::vector<int64_t> route_variable_indicies;
 
     if (route.vehicle_index >= 0) {
       previous_var = routing.NextVar(routing.Start(route.vehicle_index));
@@ -235,7 +236,7 @@ bool RouteBuilder(const TSPTWDataDT& data, RoutingModel& routing,
       if (previous_var != NULL) {
         assignment->SetValue(previous_var, routing.End(route.vehicle_index));
       }
-      std::vector<int64>& actual_route = routes[route.vehicle_index];
+      std::vector<int64_t>& actual_route = routes[route.vehicle_index];
       actual_route.insert(actual_route.end(), route_variable_indicies.begin(),
                           route_variable_indicies.end());
     }
@@ -244,7 +245,7 @@ bool RouteBuilder(const TSPTWDataDT& data, RoutingModel& routing,
 }
 
 std::vector<std::vector<IntervalVar*>>
-RestBuilder(const TSPTWDataDT& data, RoutingModel& routing, const int64 horizon) {
+RestBuilder(const TSPTWDataDT& data, RoutingModel& routing, const int64_t horizon) {
   Solver* solver          = routing.solver();
   const int size_vehicles = data.Vehicles().size();
   std::vector<std::vector<IntervalVar*>> stored_rests;
@@ -311,15 +312,15 @@ void RelationBuilder(const TSPTWDataDT& data, RoutingModel& routing,
   Solver* solver = routing.solver();
   // const int size_vehicles = data.Vehicles().size();
 
-  Solver::IndexEvaluator1 vehicle_evaluator = [&data](int64 index) {
+  Solver::IndexEvaluator1 vehicle_evaluator = [&data](int64_t index) {
     return data.VehicleDay(index);
   };
 
-  Solver::IndexEvaluator1 day_to_vehicle_evaluator = [&data](int64 index) {
+  Solver::IndexEvaluator1 day_to_vehicle_evaluator = [&data](int64_t index) {
     return data.DayIndexToVehicleIndex(index);
   };
 
-  // Solver::IndexEvaluator1 alternative_vehicle_evaluator = [&data](int64 index) {
+  // Solver::IndexEvaluator1 alternative_vehicle_evaluator = [&data](int64_t index) {
   //   return data.VehicleDayAlt(index);
   // };
 
@@ -329,15 +330,15 @@ void RelationBuilder(const TSPTWDataDT& data, RoutingModel& routing,
   }
 
   for (const TSPTWDataDT::Relation& relation : data.Relations()) {
-    int64 previous_index;
-    int64 current_index;
-    std::vector<int64> previous_indices;
+    int64_t previous_index;
+    int64_t current_index;
+    std::vector<int64_t> previous_indices;
     std::vector<std::pair<int, int>> pairs;
-    std::vector<int64> intermediate_values;
-    std::vector<int64> values;
+    std::vector<int64_t> intermediate_values;
+    std::vector<int64_t> values;
     switch (relation.type) {
     case Sequence:
-      // int64 new_current_index;
+      // int64_t new_current_index;
       previous_index = data.IdIndex(relation.linked_ids[0]);
       for (int link_index = 1; link_index < relation.linked_ids.size(); ++link_index) {
         current_index = data.IdIndex(relation.linked_ids[link_index]);
@@ -573,8 +574,8 @@ void RelationBuilder(const TSPTWDataDT& data, RoutingModel& routing,
         current_index = data.IdIndex(relation.linked_ids[link_index]);
 
         for (std::size_t v = 0; v < data.Vehicles().size(); ++v) {
-          int64 start_index = routing.Start(v);
-          // int64 end_index = routing.End(v);
+          int64_t start_index = routing.Start(v);
+          // int64_t end_index = routing.End(v);
           IntVar* const next_var = routing.NextVar(start_index);
           next_var->RemoveValue(current_index);
         }
@@ -590,7 +591,7 @@ void RelationBuilder(const TSPTWDataDT& data, RoutingModel& routing,
 
         intermediate_values.push_back(current_index);
 
-        std::vector<int64>::iterator it =
+        std::vector<int64_t>::iterator it =
             std::find(values.begin(), values.end(), current_index);
         values.erase(it);
       }
@@ -606,7 +607,7 @@ void RelationBuilder(const TSPTWDataDT& data, RoutingModel& routing,
 
         IntVar* const next_var = routing.NextVar(current_index);
         for (std::size_t v = 0; v < data.Vehicles().size(); ++v) {
-          int64 end_index = routing.End(v);
+          int64_t end_index = routing.End(v);
           next_var->RemoveValue(end_index);
         }
       }
@@ -619,7 +620,7 @@ void RelationBuilder(const TSPTWDataDT& data, RoutingModel& routing,
       }
       intermediate_values.insert(intermediate_values.end(), values.begin(), values.end());
       for (std::size_t v = 0; v < data.Vehicles().size(); ++v) {
-        int64 end_index = routing.End(v);
+        int64_t end_index = routing.End(v);
         intermediate_values.push_back(end_index);
       }
       for (int index : values) {
@@ -635,8 +636,8 @@ void RelationBuilder(const TSPTWDataDT& data, RoutingModel& routing,
              ++link_index) {
           current_index = data.VehicleIdIndex(relation.linked_vehicle_ids[link_index]);
 
-          int64 start_index = routing.Start(current_index);
-          int64 end_index   = routing.End(current_index);
+          int64_t start_index = routing.Start(current_index);
+          int64_t end_index   = routing.End(current_index);
           IntVar* const cumul_var =
               routing.GetMutableDimension(kTime)->CumulVar(start_index);
           IntVar* const end_cumul_var =
@@ -657,8 +658,8 @@ void RelationBuilder(const TSPTWDataDT& data, RoutingModel& routing,
              ++link_index) {
           current_vehicle_index =
               data.VehicleIdIndex(relation.linked_vehicle_ids[link_index]);
-          int64 current_start_index = routing.Start(current_vehicle_index);
-          int64 previous_end_index  = routing.End(previous_vehicle_index);
+          int64_t current_start_index = routing.Start(current_vehicle_index);
+          int64_t previous_end_index  = routing.End(previous_vehicle_index);
           IntVar* const current_cumul_var =
               routing.GetMutableDimension(kTime)->CumulVar(current_start_index);
           IntVar* const previous_end_cumul_var =
@@ -676,8 +677,8 @@ void RelationBuilder(const TSPTWDataDT& data, RoutingModel& routing,
              ++link_index) {
           int vehicle_index =
               data.VehicleIdIndex(relation.linked_vehicle_ids[link_index]);
-          int64 start_index = routing.Start(vehicle_index);
-          int64 end_index   = routing.End(vehicle_index);
+          int64_t start_index = routing.Start(vehicle_index);
+          int64_t end_index   = routing.End(vehicle_index);
           IntVar* const is_vehicle_used =
               solver
                   ->MakeConditionalExpression(
@@ -713,8 +714,8 @@ void AddBalanceDimensions(const TSPTWDataDT& data, RoutingModel& routing,
       const operations_research::RoutingDimension& distance_dimension =
           routing.GetDimensionOrDie(kDistance);
 
-      const int64 start_index = routing.Start(v);
-      const int64 end_index   = routing.End(v);
+      const int64_t start_index = routing.Start(v);
+      const int64_t end_index   = routing.End(v);
 
       IntVar* const time_cumul_var     = time_dimension.CumulVar(start_index);
       IntVar* const time_cumul_var_end = time_dimension.CumulVar(end_index);
@@ -733,12 +734,13 @@ void AddBalanceDimensions(const TSPTWDataDT& data, RoutingModel& routing,
     int v = 0;
     for (const TSPTWDataDT::Vehicle& vehicle : data.Vehicles()) {
       routing.GetMutableDimension(kTimeBalance)
-          ->SetSpanCostCoefficientForVehicle((int64)vehicle.cost_time_multiplier, v);
+          ->SetSpanCostCoefficientForVehicle((int64_t)vehicle.cost_time_multiplier, v);
       routing.GetMutableDimension(kDistanceBalance)
-          ->SetSpanCostCoefficientForVehicle((int64)vehicle.cost_distance_multiplier, v);
+          ->SetSpanCostCoefficientForVehicle((int64_t)vehicle.cost_distance_multiplier,
+                                             v);
 
-      const int64 start_index = routing.Start(v);
-      const int64 end_index   = routing.End(v);
+      const int64_t start_index = routing.Start(v);
+      const int64_t end_index   = routing.End(v);
 
       IntVar* const start_time_cumul_var =
           routing.GetMutableDimension(kTimeBalance)->CumulVar(start_index);
@@ -766,9 +768,9 @@ void AddBalanceDimensions(const TSPTWDataDT& data, RoutingModel& routing,
 void AddCapacityDimensions(const TSPTWDataDT& data, RoutingModel& routing,
                            RoutingIndexManager& manager) {
   for (std::size_t unit_i = 0; unit_i < data.Vehicles(0).capacity.size(); ++unit_i) {
-    std::vector<int64> capacities;
+    std::vector<int64_t> capacities;
     for (const TSPTWDataDT::Vehicle& vehicle : data.Vehicles()) {
-      const int64 coef = vehicle.overload_multiplier[unit_i];
+      const int64_t coef = vehicle.overload_multiplier[unit_i];
       if (coef == 0 && vehicle.capacity[unit_i] >= 0) {
         capacities.push_back(vehicle.capacity[unit_i]);
       } else {
@@ -776,7 +778,7 @@ void AddCapacityDimensions(const TSPTWDataDT& data, RoutingModel& routing,
       }
     }
     operations_research::RoutingTransitCallback2 quantity_evaluator =
-        [&data, &manager, unit_i](const int64 from, const int64 to) {
+        [&data, &manager, unit_i](const int64_t from, const int64_t to) {
           return data.Quantity(unit_i, manager.IndexToNode(from),
                                manager.IndexToNode(to));
         };
@@ -788,7 +790,7 @@ void AddCapacityDimensions(const TSPTWDataDT& data, RoutingModel& routing,
 
 void AddDistanceDimensions(const TSPTWDataDT& data, RoutingModel& routing,
                            RoutingIndexManager& manager,
-                           const int64 maximum_route_distance,
+                           const int64_t maximum_route_distance,
                            const bool free_approach_return) {
   std::vector<int> distance_evaluators;
   std::vector<int> fake_distance_evaluators;
@@ -796,18 +798,18 @@ void AddDistanceDimensions(const TSPTWDataDT& data, RoutingModel& routing,
 
   for (const TSPTWDataDT::Vehicle& vehicle : data.Vehicles()) {
     distance_evaluators.push_back(routing.RegisterTransitCallback(
-        [&vehicle, &manager](const int64 i, const int64 j) {
+        [&vehicle, &manager](const int64_t i, const int64_t j) {
           return vehicle.Distance(manager.IndexToNode(i), manager.IndexToNode(j));
         }));
     if (free_approach_return == true) {
       fake_distance_evaluators.push_back(routing.RegisterTransitCallback(
-          [&vehicle, &manager](const int64 i, const int64 j) {
+          [&vehicle, &manager](const int64_t i, const int64_t j) {
             return vehicle.FakeDistance(manager.IndexToNode(i), manager.IndexToNode(j));
           }));
     }
     if (absl::GetFlag(FLAGS_nearby)) {
       distance_order_evaluators.push_back(routing.RegisterTransitCallback(
-          [&vehicle, &manager](const int64 i, const int64 j) {
+          [&vehicle, &manager](const int64_t i, const int64_t j) {
             return vehicle.DistanceOrder(manager.IndexToNode(i), manager.IndexToNode(j));
           }));
     }
@@ -843,7 +845,7 @@ void AddDistanceDimensions(const TSPTWDataDT& data, RoutingModel& routing,
 }
 
 void AddTimeDimensions(const TSPTWDataDT& data, RoutingModel& routing,
-                       RoutingIndexManager& manager, const int64 horizon,
+                       RoutingIndexManager& manager, const int64_t horizon,
                        const bool free_approach_return) {
   std::vector<int> time_evaluators;
   std::vector<int> fake_time_evaluators;
@@ -851,21 +853,21 @@ void AddTimeDimensions(const TSPTWDataDT& data, RoutingModel& routing,
 
   for (const TSPTWDataDT::Vehicle& vehicle : data.Vehicles()) {
     time_evaluators.push_back(routing.RegisterTransitCallback(
-        [&vehicle, &manager](const int64 i, const int64 j) {
+        [&vehicle, &manager](const int64_t i, const int64_t j) {
           return vehicle.TimePlusServiceTime(manager.IndexToNode(i),
                                              manager.IndexToNode(j));
         }));
 
     if (free_approach_return == true) {
       fake_time_evaluators.push_back(routing.RegisterTransitCallback(
-          [&vehicle, &manager](const int64 i, const int64 j) {
+          [&vehicle, &manager](const int64_t i, const int64_t j) {
             return vehicle.FakeTimePlusServiceTime(manager.IndexToNode(i),
                                                    manager.IndexToNode(j));
           }));
     }
     if (absl::GetFlag(FLAGS_nearby)) {
       time_order_evaluators.push_back(routing.RegisterTransitCallback(
-          [&vehicle, &manager](const int64 i, const int64 j) {
+          [&vehicle, &manager](const int64_t i, const int64_t j) {
             return vehicle.TimeOrder(manager.IndexToNode(i), manager.IndexToNode(j));
           }));
     }
@@ -901,19 +903,19 @@ void AddTimeDimensions(const TSPTWDataDT& data, RoutingModel& routing,
       }
     }
 
-    const int64 without_wait_cost =
+    const int64_t without_wait_cost =
         vehicle.cost_time_multiplier - vehicle.cost_waiting_time_multiplier;
     // Vehicle costs
     if (vehicle.free_approach == true || vehicle.free_return == true) {
       routing.GetMutableDimension(kFakeTime)->SetSpanCostCoefficientForVehicle(
           vehicle.cost_waiting_time_multiplier, v);
       routing.GetMutableDimension(kFakeTimeNoWait)
-          ->SetSpanCostCoefficientForVehicle(std::max<int64>(without_wait_cost, 0), v);
+          ->SetSpanCostCoefficientForVehicle(std::max<int64_t>(without_wait_cost, 0), v);
     } else {
       routing.GetMutableDimension(kTime)->SetSpanCostCoefficientForVehicle(
           vehicle.cost_waiting_time_multiplier, v);
       routing.GetMutableDimension(kTimeNoWait)
-          ->SetSpanCostCoefficientForVehicle(std::max<int64>(without_wait_cost, 0), v);
+          ->SetSpanCostCoefficientForVehicle(std::max<int64_t>(without_wait_cost, 0), v);
     }
     if (absl::GetFlag(FLAGS_nearby)) {
       routing.GetMutableDimension(kTimeOrder)
@@ -928,7 +930,7 @@ void AddValueDimensions(const TSPTWDataDT& data, RoutingModel& routing,
   std::vector<int> value_evaluators;
   for (const TSPTWDataDT::Vehicle& vehicle : data.Vehicles()) {
     value_evaluators.push_back(routing.RegisterTransitCallback(
-        [&vehicle, &manager](const int64 i, const int64 j) {
+        [&vehicle, &manager](const int64_t i, const int64_t j) {
           return vehicle.ValuePlusServiceValue(manager.IndexToNode(i),
                                                manager.IndexToNode(j));
         }));
@@ -950,8 +952,8 @@ void AddVehicleTimeConstraints(const TSPTWDataDT& data, RoutingModel& routing,
     const operations_research::RoutingDimension& time_dimension =
         routing.GetDimensionOrDie(kTime);
 
-    const int64 start_index          = routing.Start(v);
-    const int64 end_index            = routing.End(v);
+    const int64_t start_index        = routing.Start(v);
+    const int64_t end_index          = routing.End(v);
     IntVar* const time_cumul_var     = time_dimension.CumulVar(start_index);
     IntVar* const time_cumul_var_end = time_dimension.CumulVar(end_index);
 
@@ -964,8 +966,8 @@ void AddVehicleTimeConstraints(const TSPTWDataDT& data, RoutingModel& routing,
       if (vehicle.shift_preference == ForceStart) {
         routing.GetMutableDimension(kTime)->SetCumulVarSoftUpperBound(
             start_index, vehicle.time_start,
-            std::max((int64)vehicle.cost_time_multiplier,
-                     (int64)vehicle.cost_distance_multiplier) *
+            std::max((int64_t)vehicle.cost_time_multiplier,
+                     (int64_t)vehicle.cost_distance_multiplier) *
                 100);
         IntVar* const slack_var =
             routing.GetMutableDimension(kTime)->SlackVar(start_index);
@@ -973,11 +975,11 @@ void AddVehicleTimeConstraints(const TSPTWDataDT& data, RoutingModel& routing,
       }
     }
 
-    const int64 end_value(routing_values.RouteEndValues(v).initial_time_value);
-    const int64 start_value(routing_values.RouteStartValues(v).initial_time_value);
+    const int64_t end_value(routing_values.RouteEndValues(v).initial_time_value);
+    const int64_t start_value(routing_values.RouteStartValues(v).initial_time_value);
 
     if (vehicle.time_end < CUSTOM_MAX_INT) {
-      const int64 coef = vehicle.late_multiplier;
+      const int64_t coef = vehicle.late_multiplier;
       if (end_value >= 0) {
         assignment->Add(time_cumul_var_end);
         DLOG(INFO) << "time_cumul_var_end:" << time_cumul_var_end
@@ -1046,7 +1048,7 @@ void AddVehicleDistanceConstraints(const TSPTWDataDT& data, RoutingModel& routin
       routing.GetDimensionOrDie(kDistance);
   for (const TSPTWDataDT::Vehicle& vehicle : data.Vehicles()) {
     if (vehicle.distance > 0) {
-      const int64 end_index = routing.End(v);
+      const int64_t end_index = routing.End(v);
       // Vehicle maximum distance
       IntVar* const dist_end_cumul_var = distance_dimension.CumulVar(end_index);
       solver->AddConstraint(
@@ -1059,9 +1061,9 @@ void AddVehicleDistanceConstraints(const TSPTWDataDT& data, RoutingModel& routin
 void AddVehicleCapacityConstraints(const TSPTWDataDT& data, RoutingModel& routing) {
   int v = 0;
   for (const TSPTWDataDT::Vehicle& vehicle : data.Vehicles()) {
-    int64 end_index = routing.End(v);
+    int64_t end_index = routing.End(v);
     for (std::size_t i = 0; i < vehicle.capacity.size(); ++i) {
-      const int64 coef = vehicle.overload_multiplier[i];
+      const int64_t coef = vehicle.overload_multiplier[i];
       // Capacity is already limited by the dimension horizon
       if (vehicle.capacity[i] >= 0 && coef > 0) {
         const std::string kQuantity = ("quantity" + std::to_string(i)).c_str();
@@ -1157,12 +1159,12 @@ void ParseSolutionIntoResult(const Assignment* const solution,
     float lateness_cost             = 0;
     float overload_cost             = 0;
     bool vehicle_used               = false;
-    for (int64 index = routing.Start(route_nbr); !routing.IsEnd(index);
-         index       = solution->Value(routing.NextVar(index))) {
-      const int64 start_time =
+    for (int64_t index = routing.Start(route_nbr); !routing.IsEnd(index);
+         index         = solution->Value(routing.NextVar(index))) {
+      const int64_t start_time =
           solution->Min(routing.GetMutableDimension(kTime)->CumulVar(index));
       for (std::vector<IntervalVar*>::iterator it = rests.begin(); it != rests.end();) {
-        const int64 rest_start_time = solution->StartValue(*it);
+        const int64_t rest_start_time = solution->StartValue(*it);
         if (solution->PerformedValue(*it) && previous_index != -1 &&
             rest_start_time >= previous_start_time && rest_start_time < start_time) {
           std::stringstream ss((*it)->name());
@@ -1186,9 +1188,9 @@ void ParseSolutionIntoResult(const Assignment* const solution,
       RoutingIndexManager::NodeIndex nodeIndex = manager.IndexToNode(index);
       activity->set_index(data.ProblemIndex(nodeIndex));
       activity->set_start_time(start_time);
-      const int64 upper_bound =
+      const int64_t upper_bound =
           routing.GetMutableDimension(kTime)->GetCumulVarSoftUpperBound(index);
-      const int64 lateness = std::max<int64>(start_time - upper_bound, 0);
+      const int64_t lateness = std::max<int64_t>(start_time - upper_bound, 0);
       activity->set_lateness(lateness);
       lateness_cost += GetUpperBoundCostForDimension(routing, solution, index, kTime);
       activity->set_current_distance(
@@ -1224,7 +1226,7 @@ void ParseSolutionIntoResult(const Assignment* const solution,
 
     for (std::vector<IntervalVar*>::iterator it = rests.begin(); it != rests.end();
          ++it) {
-      const int64 rest_start_time = solution->StartValue(*it);
+      const int64_t rest_start_time = solution->StartValue(*it);
       if (solution->PerformedValue(*it)) {
         ortools_result::Activity* rest = route->add_activities();
         std::stringstream ss((*it)->name());
@@ -1242,15 +1244,15 @@ void ParseSolutionIntoResult(const Assignment* const solution,
     ortools_result::Activity* end_activity = route->add_activities();
     RoutingIndexManager::NodeIndex nodeIndex =
         manager.IndexToNode(routing.End(route_nbr));
-    const int64 end_index = routing.End(route_nbr);
+    const int64_t end_index = routing.End(route_nbr);
     end_activity->set_index(data.ProblemIndex(nodeIndex));
 
-    const int64 start_time =
+    const int64_t start_time =
         solution->Min(routing.GetMutableDimension(kTime)->CumulVar(end_index));
     end_activity->set_start_time(start_time);
-    const int64 upper_bound =
+    const int64_t upper_bound =
         routing.GetMutableDimension(kTime)->GetCumulVarSoftUpperBound(end_index);
-    const int64 lateness = std::max<int64>(start_time - upper_bound, 0);
+    const int64_t lateness = std::max<int64_t>(start_time - upper_bound, 0);
     end_activity->set_lateness(lateness);
     lateness_cost += GetUpperBoundCostForDimension(routing, solution, end_index, kTime);
     end_activity->set_current_distance(solution->Min(
@@ -1332,9 +1334,9 @@ void ParseSolutionIntoResult(const Assignment* const solution,
   result->set_iterations(scores[2]);
 }
 
-int64 LowerBoundOnTheIntervalBetweenBreaksOfVehicle(const TSPTWDataDT& data,
-                                                    const int64 vehicle_index,
-                                                    const int64 route_duration) {
+int64_t LowerBoundOnTheIntervalBetweenBreaksOfVehicle(const TSPTWDataDT& data,
+                                                      const int64_t vehicle_index,
+                                                      const int64_t route_duration) {
   DLOG(INFO) << "LowerBoundOnTheIntervalBetweenBreaksOfVehicle";
   const TSPTWDataDT::Vehicle& vehicle = data.Vehicles(vehicle_index);
 
@@ -1392,7 +1394,7 @@ int64 LowerBoundOnTheIntervalBetweenBreaksOfVehicle(const TSPTWDataDT& data,
   DLOG(INFO) << "Optimal objective value = " << objective->Value();
   DLOG(INFO) << "Problem solved in " << solver.wall_time() << " milliseconds and "
              << solver.iterations() << " iterations";
-  return static_cast<int64>(gamma.SolutionValue());
+  return static_cast<int64_t>(gamma.SolutionValue());
 }
 
 const ortools_result::Result* TSPTWSolver(const TSPTWDataDT& data,
@@ -1426,8 +1428,8 @@ const ortools_result::Result* TSPTWSolver(const TSPTWDataDT& data,
   RoutingIndexManager manager(size, size_vehicles, *start_ends);
   RoutingModel routing(manager);
 
-  int64 maximum_route_distance = 0;
-  int64 v                      = 0;
+  int64_t maximum_route_distance = 0;
+  int64_t v                      = 0;
   while ((maximum_route_distance != INT_MAX) && (v < size_vehicles)) {
     if (data.Vehicles(v).distance == -1)
       maximum_route_distance = INT_MAX;
@@ -1438,7 +1440,7 @@ const ortools_result::Result* TSPTWSolver(const TSPTWDataDT& data,
   }
 
   // Dimensions
-  const int64 horizon =
+  const int64_t horizon =
       data.Horizon() * (has_lateness && !CheckOverflow(data.Horizon(), 2) ? 2 : 1);
   DLOG(INFO) << "horizon=" << horizon;
 
@@ -1457,8 +1459,8 @@ const ortools_result::Result* TSPTWSolver(const TSPTWDataDT& data,
   AddVehicleDistanceConstraints(data, routing);
   AddVehicleCapacityConstraints(data, routing);
 
-  v               = 0;
-  int64 min_start = CUSTOM_MAX_INT;
+  v                 = 0;
+  int64_t min_start = CUSTOM_MAX_INT;
 
   for (const TSPTWDataDT::Vehicle& vehicle : data.Vehicles()) {
     routing.SetFixedCostOfVehicle(vehicle.cost_fixed, v);
@@ -1469,8 +1471,8 @@ const ortools_result::Result* TSPTWSolver(const TSPTWDataDT& data,
   std::vector<IntVar*> used_vehicles;
   if (absl::GetFlag(FLAGS_vehicle_limit) > 0) {
     for (int vehicle = 0; vehicle < size_vehicles; ++vehicle) {
-      int64 start_index = routing.Start(vehicle);
-      int64 end_index   = routing.End(vehicle);
+      int64_t start_index = routing.Start(vehicle);
+      int64_t end_index   = routing.End(vehicle);
       IntVar* const is_vehicle_used =
           solver
               ->MakeConditionalExpression(
@@ -1481,15 +1483,15 @@ const ortools_result::Result* TSPTWSolver(const TSPTWDataDT& data,
     }
 
     solver->AddConstraint(solver->MakeLessOrEqual(
-        solver->MakeSum(used_vehicles), (int64)absl::GetFlag(FLAGS_vehicle_limit)));
+        solver->MakeSum(used_vehicles), (int64_t)absl::GetFlag(FLAGS_vehicle_limit)));
   }
 
   // Setting solve parameters indicators
-  int64 previous_distance_depot_start = -1;
-  int64 previous_distance_depot_end   = -1;
-  ShiftPref shift_preference          = MinimizeSpan;
-  bool loop_route                     = true;
-  bool unique_configuration           = true;
+  int64_t previous_distance_depot_start = -1;
+  int64_t previous_distance_depot_end   = -1;
+  ShiftPref shift_preference            = MinimizeSpan;
+  bool loop_route                       = true;
+  bool unique_configuration             = true;
   RoutingIndexManager::NodeIndex compareNodeIndex =
       manager.IndexToNode(rand() % (data.SizeMatrix() - 2));
   const TSPTWDataDT::Vehicle* previous_vehicle = nullptr;
@@ -1500,14 +1502,15 @@ const ortools_result::Result* TSPTWSolver(const TSPTWDataDT& data,
     RoutingIndexManager::NodeIndex nodeIndexEnd =
         manager.IndexToNode(routing.End(route_nbr));
 
-    int64 distance_depot_start =
+    int64_t distance_depot_start =
         std::max(vehicle->Time(nodeIndexStart, compareNodeIndex),
                  vehicle->Distance(nodeIndexStart, compareNodeIndex));
-    int64 distance_depot_end =
+    int64_t distance_depot_end =
         std::max(vehicle->Time(compareNodeIndex, nodeIndexEnd),
                  vehicle->Distance(compareNodeIndex, nodeIndexEnd));
-    int64 distance_start_end = std::max(vehicle->Time(nodeIndexStart, nodeIndexEnd),
-                                        vehicle->Distance(nodeIndexStart, nodeIndexEnd));
+    int64_t distance_start_end =
+        std::max(vehicle->Time(nodeIndexStart, nodeIndexEnd),
+                 vehicle->Distance(nodeIndexStart, nodeIndexEnd));
 
     if (previous_vehicle != nullptr) {
       if (previous_distance_depot_start != distance_depot_start ||
@@ -1665,14 +1668,14 @@ void PushRestsToTheMiddle(const ortools_result::Result*& result, const TSPTWData
 
     // set current_max_break_interval
     // set max_break_interval_LB
-    int64 current_max_break_interval = 0;
-    int64 time_of_last_pause         = 0;
+    int64_t current_max_break_interval = 0;
+    int64_t time_of_last_pause         = 0;
     std::for_each(
         route.activities().begin(), route.activities().end(),
         [&time_of_last_pause, &current_max_break_interval, &local_data,
          v](const ortools_result::Activity& activity) {
           if (activity.type() == "service") {
-            local_data.SetVehicleIndices(activity.index(), std::vector<int64>(1, v));
+            local_data.SetVehicleIndices(activity.index(), std::vector<int64_t>(1, v));
           } else if (activity.type() == "break" || activity.type() == "end") {
             current_max_break_interval = std::max(
                 current_max_break_interval, activity.start_time() - time_of_last_pause);
@@ -1687,9 +1690,9 @@ void PushRestsToTheMiddle(const ortools_result::Result*& result, const TSPTWData
         });
     local_data.SetMaxBreakDistUBOfVehicle(v, current_max_break_interval);
 
-    const int64 route_duration = route.activities().rbegin()->start_time() -
-                                 route.activities().begin()->start_time();
-    int64 max_break_interval_LB =
+    const int64_t route_duration = route.activities().rbegin()->start_time() -
+                                   route.activities().begin()->start_time();
+    int64_t max_break_interval_LB =
         LowerBoundOnTheIntervalBetweenBreaksOfVehicle(local_data, v, route_duration);
     if (max_break_interval_LB == -1 || max_break_interval_LB > current_max_break_interval)
       max_break_interval_LB = current_max_break_interval;
@@ -1708,7 +1711,7 @@ void PushRestsToTheMiddle(const ortools_result::Result*& result, const TSPTWData
     // Because of rounding up, rounding_step acts as if
     // it is double the amount, so don't increase it too
     // much. Binary search is very fast.
-    const int64 rounding_step = DEBUG_MODE ? 1 : 120; // in seconds
+    const int64_t rounding_step = DEBUG_MODE ? 1 : 120; // in seconds
 
     absl::SetFlag(&FLAGS_verification_only, true);
     absl::SetFlag(&FLAGS_intermediate_solutions, DEBUG_MODE);
@@ -1734,7 +1737,7 @@ void PushRestsToTheMiddle(const ortools_result::Result*& result, const TSPTWData
       // Do a binary seach between the UB and LB
       while (true) {
         // re-set the max_interval_limit to the middle
-        const int64 new_max_interval_limit =
+        const int64_t new_max_interval_limit =
             RoundUp(std::ceil((local_data.MaxBreakDistUBOfVehicle(v) +
                                local_data.MaxBreakDistLBOfVehicle(v)) /
                               2.0),

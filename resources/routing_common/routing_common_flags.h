@@ -52,7 +52,7 @@ ABSL_FLAG(double, epix_radius, 0.3, "Radius of circles.");
 ABSL_FLAG(bool, epix_node_labels, false, "Print node labels?");
 
 ABSL_FLAG(int, percentage_forbidden_arcs_max, 94, "Maximum percentage of arcs to forbid.");
-ABSL_FLAG(int64, M, operations_research::kPostiveInfinityInt64, "Big m value to represent infinity.");
+ABSL_FLAG(int64_t, M, operations_research::kPostiveInfinityInt64, "Big m value to represent infinity.");
 
 
 #endif //  OR_TOOLS_TUTORIALS_CPLUSPLUS_ROUTING_COMMON_FLAGS_H
